@@ -12,8 +12,8 @@ function renameField(): void {
       logger: "++id,level,createtime",
       // export: "++id,&scriptId",
     })
-    .upgrade(async (tx) => {
-      await tx.table("export").clear();
+    .upgrade(async (tx: any) => {
+      await tx.table("export").clear(); 
       return tx
         .table("scripts")
         .toCollection()
@@ -75,7 +75,7 @@ export default function migrate() {
       scripts:
         "++id,&uuid,name,namespace,author,origin_domain,type,sort,status,runStatus,createtime,updatetime,checktime",
     })
-    .upgrade((tx) => {
+    .upgrade((tx: any) => {
       return tx
         .table("scripts")
         .toCollection()
@@ -90,10 +90,10 @@ export default function migrate() {
     .stores({
       value: "++id,scriptId,storageName,key,createtime",
     })
-    .upgrade((tx) => {
+    .upgrade((tx: any) => {
       tx.table("value")
         .toCollection()
-        .modify((value) => {
+        .modify((value: any) => {
           if (value.namespace) {
             value.storageName = value.namespace;
             delete value.namespace;
@@ -112,6 +112,17 @@ export default function migrate() {
   db.version(15).stores({
     permission:
       "++id,scriptId,[scriptId+permission+permissionValue],createtime,updatetime",
+  });
+  db.version(18).upgrade((tx: any) => {
+    return tx
+      .table("scripts")
+      .toCollection()
+      .modify((script: Script) => {
+        script.lastCheckUpdateTime = script.checktime;
+        if (script.updatetime) {
+          script.checktime = script.updatetime;
+        }
+      });
   });
   // 使用小峰驼统一命名规范
   renameField();
