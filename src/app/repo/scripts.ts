@@ -77,7 +77,7 @@ export interface Script {
   checktime: number; // 脚本检查更新时间戳
   lastruntime?: number; // 脚本最后一次运行时间戳
   nextruntime?: number; // 脚本下一次运行时间戳
-  lastCheckUpdateTime?: number; // 脚本最后一次检查更新时间戳
+  lastCheckUpdateTime?: number; // 脚本最后一次检查更新时间戳   
 }
 
 // 脚本运行时的资源,包含已经编译好的脚本与脚本需要的资源
