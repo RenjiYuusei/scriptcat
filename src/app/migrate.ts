@@ -13,7 +13,7 @@ function renameField(): void {
       // export: "++id,&scriptId",
     })
     .upgrade(async (tx: any) => {
-      await tx.table("export").clear(); 
+      await tx.table("export").clear();
       return tx
         .table("scripts")
         .toCollection()
@@ -112,17 +112,6 @@ export default function migrate() {
   db.version(15).stores({
     permission:
       "++id,scriptId,[scriptId+permission+permissionValue],createtime,updatetime",
-  });
-  db.version(18).upgrade((tx: any) => {
-    return tx
-      .table("scripts")
-      .toCollection()
-      .modify((script: Script) => {
-        script.lastCheckUpdateTime = script.checktime;
-        if (script.updatetime) {
-          script.checktime = script.updatetime;
-        }
-      });
   });
   // 使用小峰驼统一命名规范
   renameField();
