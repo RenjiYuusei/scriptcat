@@ -554,7 +554,12 @@ function App() {
             </Grid.Row>
           </Grid.Col>
         </Grid.Row>
-        <CodeEditor id="show-code" code={scriptCode || undefined} diffCode={diffCode || ""} />
+        <CodeEditor
+          id="show-code"
+          code={scriptCode || undefined}
+          diffCode={diffCode || ""}
+          className="absolute left-0 right-0"
+        />
       </div>
     </div>
   );
