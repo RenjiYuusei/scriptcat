@@ -1,16 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  Button,
-  Collapse,
-  Empty,
-  Form,
-  Input,
-  InputNumber,
-  Message,
-  Popconfirm,
-  Space,
-  Switch,
-} from "@arco-design/web-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Collapse, Empty, Form, Input, InputNumber, Message, Popconfirm, Switch } from "@arco-design/web-react";
 import {
   IconCaretDown,
   IconCaretUp,
@@ -116,10 +105,11 @@ MenuItem.displayName = "MenuItem";
 interface CollapseHeaderProps {
   item: ScriptMenu;
   onEnableChange: (item: ScriptMenu, checked: boolean) => void;
+  menuToggle?: React.ReactNode;
 }
 
 const CollapseHeader = React.memo(
-  ({ item, onEnableChange }: CollapseHeaderProps) => {
+  ({ item, onEnableChange, menuToggle }: CollapseHeaderProps) => {
     const { t } = useTranslation();
 
     return (
@@ -138,9 +128,15 @@ const CollapseHeader = React.memo(
             : t("script_disabled")!
         }
       >
-        <Space>
-          <Switch size="small" checked={item.enable} onChange={(checked) => onEnableChange(item, checked)} />
+        <div className="flex items-center gap-2 min-w-0">
+          <Switch
+            size="small"
+            className="flex-shrink-0"
+            checked={item.enable}
+            onChange={(checked) => onEnableChange(item, checked)}
+          />
           <span
+            className="flex-1 min-w-0"
             style={{
               display: "block",
               overflow: "hidden",
@@ -153,12 +149,17 @@ const CollapseHeader = React.memo(
             <ScriptIcons script={item} size={20} />
             {i18nName(item)}
           </span>
-        </Space>
+          {menuToggle}
+        </div>
       </div>
     );
   },
   (prevProps, nextProps) => {
-    return prevProps.item === nextProps.item;
+    return (
+      prevProps.item === nextProps.item &&
+      prevProps.onEnableChange === nextProps.onEnableChange &&
+      prevProps.menuToggle === nextProps.menuToggle
+    );
   }
 );
 CollapseHeader.displayName = "CollapseHeader";
@@ -180,19 +181,49 @@ const ListMenuItem = React.memo(
 
     const [isExpand, setIsExpand] = useState<boolean>(false);
 
-    const handleExpandMenu = () => {
+    const handleExpandMenu = useCallback(() => {
       setIsExpand((e) => !e);
-    };
+    }, []);
+
+    const normalizedExpandNum = Number.isFinite(menuExpandNum) ? menuExpandNum : 0;
+    const hasExpandLimit = normalizedExpandNum >= 0;
+    const expandLimit = hasExpandLimit ? Math.max(0, normalizedExpandNum) : 0;
 
     const visibleMenus = useMemo(() => {
       const m = scriptMenus?.group || [];
-      return m.length > menuExpandNum && !isExpand ? m.slice(0, menuExpandNum) : m;
-    }, [scriptMenus?.group, isExpand, menuExpandNum]);
+      if (!hasExpandLimit) return m;
+      if (!isExpand && m.length > expandLimit) {
+        return m.slice(0, expandLimit);
+      }
+      return m;
+    }, [scriptMenus?.group, hasExpandLimit, isExpand, expandLimit]);
 
     const shouldShowMore = useMemo(
-      () => scriptMenus?.group?.length > menuExpandNum,
-      [scriptMenus?.group, menuExpandNum]
+      () => hasExpandLimit && scriptMenus?.group?.length > expandLimit,
+      [hasExpandLimit, scriptMenus?.group, expandLimit]
     );
+
+    const inlineMenuToggle = shouldShowMore && expandLimit === 0;
+
+    const inlineToggleButton = useMemo(() => {
+      if (!inlineMenuToggle) return null;
+      const label = isExpand ? t("collapse") : t("expand");
+      return (
+        <Button
+          type="text"
+          size="mini"
+          icon={isExpand ? <IconCaretUp /> : <IconCaretDown />}
+          iconOnly
+          aria-label={label}
+          title={label}
+          onClick={(event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            handleExpandMenu();
+          }}
+        />
+      );
+    }, [handleExpandMenu, inlineMenuToggle, isExpand, t]);
 
     const handleExcludeUrl = (uuid: string, excludePattern: string, isExclude: boolean) => {
       scriptClient.excludeUrl(uuid, excludePattern, isExclude).finally(() => {
@@ -203,7 +234,7 @@ const ListMenuItem = React.memo(
     return (
       <Collapse bordered={false} expandIconPosition="right" key={item.uuid}>
         <CollapseItem
-          header={<CollapseHeader item={item} onEnableChange={onEnableChange} />}
+          header={<CollapseHeader item={item} onEnableChange={onEnableChange} menuToggle={inlineToggleButton} />}
           name={item.uuid}
           contentStyle={{ padding: "0 0 0 40px" }}
         >
@@ -264,7 +295,7 @@ const ListMenuItem = React.memo(
             // 不同脚本之间可能出现相同的 groupKey；为避免 React key 冲突，需加上 uuid 做区分。
             return <MenuItem key={`${uuid}:${groupKey}`} menuItems={menus} uuid={uuid} />;
           })}
-          {shouldShowMore && (
+          {shouldShowMore && !inlineMenuToggle && (
             <Button
               className="text-left"
               key="expand"
