@@ -189,9 +189,12 @@ const ListMenuItem = React.memo(
     const hasExpandLimit = normalizedExpandNum >= 0;
     const expandLimit = hasExpandLimit ? Math.max(0, normalizedExpandNum) : 0;
 
+    const hasExpandLimit = menuExpandNum > 0;
+
     const visibleMenus = useMemo(() => {
       const m = scriptMenus?.group || [];
       if (!hasExpandLimit) return m;
+ codex/fix-menu-display-issue-when-set-to-0-vd6wph
       if (!isExpand && m.length > expandLimit) {
         return m.slice(0, expandLimit);
       }
@@ -201,6 +204,14 @@ const ListMenuItem = React.memo(
     const shouldShowMore = useMemo(
       () => hasExpandLimit && scriptMenus?.group?.length > expandLimit,
       [hasExpandLimit, scriptMenus?.group, expandLimit]
+
+      return m.length > menuExpandNum && !isExpand ? m.slice(0, menuExpandNum) : m;
+    }, [scriptMenus?.group, hasExpandLimit, isExpand, menuExpandNum]);
+
+    const shouldShowMore = useMemo(
+      () => hasExpandLimit && scriptMenus?.group?.length > menuExpandNum,
+      [hasExpandLimit, scriptMenus?.group, menuExpandNum]
+ main
     );
 
     const inlineMenuToggle = shouldShowMore && expandLimit === 0;
