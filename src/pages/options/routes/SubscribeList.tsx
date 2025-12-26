@@ -297,8 +297,8 @@ function SubscribeList() {
           pageSize: list.length,
           hideOnSinglePage: true,
         }}
-        style={{
-          minWidth: "1200px",
+        scroll={{
+          x: 1000,
         }}
       />
     </Card>

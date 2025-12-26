@@ -992,6 +992,9 @@ export const ScriptTable = ({
             setSelect(selectedRows);
           },
         }}
+        scroll={{
+          x: 1000,
+        }}
       />
     </DraggableContext.Provider>
   );
